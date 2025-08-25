@@ -1,0 +1,36 @@
+modules = ["python-3.11"]
+[agent]
+expertMode = true
+integrations = ["python_database==1.0.0"]
+
+[nix]
+channel = "stable-25_05"
+packages = ["glibcLocales"]
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Telegram Bot"
+
+[[workflows.workflow]]
+name = "Telegram Bot"
+author = "agent"
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pip uninstall telegram -y 2>/dev/null; pip install python-telegram-bot==20.8 aiohttp flask psutil psycopg2-binary python-dotenv sqlalchemy requests nltk textblob scikit-learn && python main.py"
+waitForPort = 5000
+
+[[ports]]
+localPort = 5000
+externalPort = 80
