@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bot Admin Panel - Telegram Channel Manager</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1><i class="fas fa-robot"></i> Telegram Bot Admin Panel</h1>
+            <p>Channel Management, Movie Search & Copyright Protection System</p>
+        </header>
+
+        <!-- Dashboard Cards -->
+        <div class="dashboard">
+            <!-- Admins Card -->
+            <div class="card fade-in">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <i class="fas fa-users-cog"></i>
+                    </div>
+                    <div class="card-title">Total Admins</div>
+                </div>
+                <div class="stat-value" id="total-admins">{{ stats.total_admins or 0 }}</div>
+                <div class="stat-label">Active administrators</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="admins-progress" style="width: {{ (stats.total_admins or 0) * 10 }}%"></div>
+                </div>
+            </div>
+
+            <!-- Channels Card -->
+            <div class="card fade-in">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <i class="fas fa-broadcast-tower"></i>
+                    </div>
+                    <div class="card-title">Managed Channels</div>
+                </div>
+                <div class="stat-value" id="total-channels">{{ stats.total_channels or 0 }}</div>
+                <div class="stat-label">Active channels</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="channels-progress" style="width: {{ (stats.total_channels or 0) * 2 }}%"></div>
+                </div>
+            </div>
+
+            <!-- Keywords Card -->
+            <div class="card fade-in">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <div class="card-title">Filter Keywords</div>
+                </div>
+                <div class="stat-value" id="total-keywords">{{ stats.total_keywords or 0 }}</div>
+                <div class="stat-label">Copyright protection filters</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="keywords-progress" style="width: {{ (stats.total_keywords or 0) * 4 }}%"></div>
+                </div>
+            </div>
+
+            <!-- Members Card -->
+            <div class="card fade-in">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="card-title">Total Members</div>
+                </div>
+                <div class="stat-value" id="total-members">{{ "{:,}".format(stats.total_members or 0) }}</div>
+                <div class="stat-label">Across all channels</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 75%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Control Panel -->
+        <div class="card table-container">
+            <div class="card-header">
+                <div class="card-icon">
+                    <i class="fas fa-cogs"></i>
+                </div>
+                <div class="card-title">Quick Actions</div>
+            </div>
+            
+            <div style="margin: 20px 0; display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+                <button class="btn refresh-btn">
+                    <i class="fas fa-sync-alt"></i> Refresh Data
+                </button>
+                
+                <input type="text" id="searchInput" placeholder="Search tables..." 
+                       style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; flex: 1; min-width: 200px;">
+                
+                <label style="display: flex; align-items: center; gap: 8px; color: white;">
+                    <input type="checkbox" id="autoRefresh" checked>
+                    Auto-refresh (30s)
+                </label>
+            </div>
+
+            <!-- System Status -->
+            <div class="alert alert-info">
+                <strong><i class="fas fa-info-circle"></i> System Status:</strong>
+                Bot is running in {{ 'production' if environment == 'production' else 'development' }} mode.
+                Database: {{ 'PostgreSQL' if database_connected else 'File Storage (Fallback)' }}
+                AI Protection: {{ 'Enabled' if ai_enabled else 'Disabled' }}
+            </div>
+        </div>
+
+        <!-- Channels Management -->
+        <div class="card table-container">
+            <div class="card-header">
+                <div class="card-icon">
+                    <i class="fas fa-broadcast-tower"></i>
+                </div>
+                <div class="card-title">Channel Management</div>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <a href="#" class="btn btn-success" onclick="promptAddChannel()">
+                    <i class="fas fa-plus"></i> Add Channel
+                </a>
+                <button class="btn btn-secondary" onclick="exportChannels()">
+                    <i class="fas fa-download"></i> Export Data
+                </button>
+            </div>
+
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th><i class="fas fa-tag"></i> Channel Name</th>
+                        <th><i class="fas fa-at"></i> Username</th>
+                        <th><i class="fas fa-users"></i> Members</th>
+                        <th><i class="fas fa-circle"></i> Status</th>
+                        <th><i class="fas fa-calendar"></i> Added</th>
+                        <th><i class="fas fa-cogs"></i> Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="channels-tbody">
+                    {% for channel in channels %}
+                    <tr class="fade-in">
+                        <td>{{ channel.channel_name or 'Unknown' }}</td>
+                        <td>@{{ channel.channel_username or 'N/A' }}</td>
+                        <td>{{ "{:,}".format(channel.member_count or 0) }}</td>
+                        <td>
+                            <span class="status-badge {{ 'status-active' if channel.is_active else 'status-inactive' }}">
+                                {{ 'Active' if channel.is_active else 'Inactive' }}
+                            </span>
+                        </td>
+                        <td>{{ channel.added_at[:10] if channel.added_at else 'N/A' }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-danger btn-action" 
+                                    data-action="remove-channel" 
+                                    data-id="{{ channel.channel_id }}">
+                                <i class="fas fa-trash"></i> Remove
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+            {% if not channels %}
+            <div style="text-align: center; padding: 40px; color: #666;">
+                <i class="fas fa-broadcast-tower" style="font-size: 3rem; margin-bottom: 20px; opacity: 0.3;"></i>
+                <p>No channels configured yet.</p>
+                <p>Use the "Add Channel" button to get started.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Admins Management -->
+        <div class="card table-container">
+            <div class="card-header">
+                <div class="card-icon">
+                    <i class="fas fa-users-cog"></i>
+                </div>
+                <div class="card-title">Admin Management</div>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <a href="#" class="btn btn-success" onclick="promptAddAdmin()">
+                    <i class="fas fa-user-plus"></i> Add Admin
+                </a>
+                <button class="btn btn-secondary" onclick="exportAdmins()">
+                    <i class="fas fa-download"></i> Export List
+                </button>
+            </div>
+
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th><i class="fas fa-user"></i> Name</th>
+                        <th><i class="fas fa-at"></i> Username</th>
+                        <th><i class="fas fa-id-card"></i> User ID</th>
+                        <th><i class="fas fa-circle"></i> Status</th>
+                        <th><i class="fas fa-calendar"></i> Added</th>
+                        <th><i class="fas fa-cogs"></i> Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="admins-tbody">
+                    {% for admin in admins %}
+                    <tr class="fade-in">
+                        <td>{{ admin.first_name or 'Unknown' }}</td>
+                        <td>@{{ admin.username or 'N/A' }}</td>
+                        <td><code>{{ admin.user_id }}</code></td>
+                        <td>
+                            <span class="status-badge {{ 'status-active' if admin.is_active else 'status-inactive' }}">
+                                {{ 'Active' if admin.is_active else 'Inactive' }}
+                            </span>
+                        </td>
+                        <td>{{ admin.added_at[:10] if admin.added_at else 'N/A' }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-danger btn-action" 
+                                    data-action="remove-admin" 
+                                    data-id="{{ admin.user_id }}"
+                                    {{ 'disabled' if admin.user_id in super_admins else '' }}>
+                                <i class="fas fa-user-times"></i> Remove
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+            {% if not admins %}
+            <div style="text-align: center; padding: 40px; color: #666;">
+                <i class="fas fa-users-cog" style="font-size: 3rem; margin-bottom: 20px; opacity: 0.3;"></i>
+                <p>No admins configured yet.</p>
+                <p>Use the "Add Admin" button to add administrators.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Keywords Management -->
+        <div class="card table-container">
+            <div class="card-header">
+                <div class="card-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div class="card-title">Copyright Filter Keywords</div>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <a href="#" class="btn btn-success" onclick="promptAddKeyword()">
+                    <i class="fas fa-plus"></i> Add Keyword
+                </a>
+                <button class="btn btn-secondary" onclick="testAIFilter()">
+                    <i class="fas fa-robot"></i> Test AI Filter
+                </button>
+                <button class="btn btn-secondary" onclick="exportKeywords()">
+                    <i class="fas fa-download"></i> Export Keywords
+                </button>
+            </div>
+
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th><i class="fas fa-key"></i> Keyword</th>
+                        <th><i class="fas fa-chart-bar"></i> Detections</th>
+                        <th><i class="fas fa-circle"></i> Status</th>
+                        <th><i class="fas fa-calendar"></i> Added</th>
+                        <th><i class="fas fa-cogs"></i> Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="keywords-tbody">
+                    {% for keyword in keywords %}
+                    <tr class="fade-in">
+                        <td><code>{{ keyword.keyword }}</code></td>
+                        <td>{{ keyword.detection_count or 0 }}</td>
+                        <td>
+                            <span class="status-badge {{ 'status-active' if keyword.is_active else 'status-inactive' }}">
+                                {{ 'Active' if keyword.is_active else 'Inactive' }}
+                            </span>
+                        </td>
+                        <td>{{ keyword.added_at[:10] if keyword.added_at else 'N/A' }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-danger btn-action" 
+                                    data-action="remove-keyword" 
+                                    data-id="{{ keyword.keyword }}">
+                                <i class="fas fa-trash"></i> Remove
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+            {% if not keywords %}
+            <div style="text-align: center; padding: 40px; color: #666;">
+                <i class="fas fa-shield-alt" style="font-size: 3rem; margin-bottom: 20px; opacity: 0.3;"></i>
+                <p>No custom keywords configured.</p>
+                <p>Default copyright keywords are active.</p>
+                <p>Use "Add Keyword" to add custom filters.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Footer -->
+        <footer style="text-align: center; margin-top: 40px; padding: 20px; color: rgba(255,255,255,0.7);">
+            <p>&copy; 2025 Telegram Bot Control Panel. All rights reserved.</p>
+            <p>Last updated: <span id="last-updated">{{ last_updated or 'Never' }}</span></p>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <script>
+        // Additional interactive functions
+        function promptAddChannel() {
+            const channelInput = prompt("Enter channel username or ID:\n\nExamples:\n• @mychannel\n• -1001234567890\n• https://t.me/mychannel");
+            if (channelInput && channelInput.trim()) {
+                addChannel(channelInput.trim());
+            }
+        }
+
+        function promptAddAdmin() {
+            const adminId = prompt("Enter user ID of the new admin:\n\nExample: 123456789\n\nUse /getid command in the bot to get user IDs.");
+            if (adminId && adminId.trim()) {
+                addAdmin(adminId.trim());
+            }
+        }
+
+        function promptAddKeyword() {
+            const keyword = prompt("Enter keyword to filter:\n\nExample: pirated movie\n\nKeywords are case-insensitive.");
+            if (keyword && keyword.trim()) {
+                addKeyword(keyword.trim());
+            }
+        }
+
+        async function addChannel(channelInput) {
+            try {
+                const response = await fetch('/api/add-channel', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ channel: channelInput })
+                });
+                
+                const result = await response.json();
+                if (response.ok) {
+                    alert('✅ Channel added successfully!');
+                    location.reload();
+                } else {
+                    alert('❌ Error: ' + (result.error || 'Failed to add channel'));
+                }
+            } catch (error) {
+                alert('❌ Error: ' + error.message);
+            }
+        }
+
+        async function addAdmin(adminId) {
+            try {
+                const response = await fetch('/api/add-admin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: parseInt(adminId) })
+                });
+                
+                const result = await response.json();
+                if (response.ok) {
+                    alert('✅ Admin added successfully!');
+                    location.reload();
+                } else {
+                    alert('❌ Error: ' + (result.error || 'Failed to add admin'));
+                }
+            } catch (error) {
+                alert('❌ Error: ' + error.message);
+            }
+        }
+
+        async function addKeyword(keyword) {
+            try {
+                const response = await fetch('/api/add-keyword', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ keyword: keyword })
+                });
+                
+                const result = await response.json();
+                if (response.ok) {
+                    alert('✅ Keyword added successfully!');
+                    location.reload();
+                } else {
+                    alert('❌ Error: ' + (result.error || 'Failed to add keyword'));
+                }
+            } catch (error) {
+                alert('❌ Error: ' + error.message);
+            }
+        }
+
+        function testAIFilter() {
+            const testText = prompt("Enter text to test AI copyright detection:\n\nExample: Download the latest movie for free here");
+            if (testText && testText.trim()) {
+                performAITest(testText.trim());
+            }
+        }
+
+        async function performAITest(text) {
+            try {
+                const response = await fetch('/api/test-ai', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: text })
+                });
+                
+                const result = await response.json();
+                if (response.ok) {
+                    alert(`🧪 AI Test Results:\n\nText: "${text}"\n\nRisk Score: ${result.score}/1.000\nStatus: ${result.would_filter ? '🚫 WOULD BE FILTERED' : '✅ WOULD PASS'}\nKeywords Found: ${result.keywords.length}\nDetails: ${result.analysis}`);
+                } else {
+                    alert('❌ Error: ' + (result.error || 'Failed to test AI'));
+                }
+            } catch (error) {
+                alert('❌ Error: ' + error.message);
+            }
+        }
+
+        function exportChannels() {
+            window.open('/api/export/channels', '_blank');
+        }
+
+        function exportAdmins() {
+            window.open('/api/export/admins', '_blank');
+        }
+
+        function exportKeywords() {
+            window.open('/api/export/keywords', '_blank');
+        }
+
+        // Update last updated timestamp
+        document.getElementById('last-updated').textContent = new Date().toLocaleString();
+    </script>
+</body>
+</html>

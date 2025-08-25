@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bot Health Check - Telegram Channel Manager</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta http-equiv="refresh" content="30">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1><i class="fas fa-heartbeat"></i> Bot Health Monitor</h1>
+            <p>Real-time system status and performance monitoring</p>
+        </header>
+
+        <!-- Health Status -->
+        <div class="health-status" id="health-status">
+            <div style="text-align: center;">
+                <div class="health-icon" id="health-icon">
+                    {% if health_data.bot_running %}
+                        <i class="fas fa-check-circle"></i>
+                    {% else %}
+                        <i class="fas fa-exclamation-triangle"></i>
+                    {% endif %}
+                </div>
+                <h2 class="health-message" id="health-message">
+                    {% if health_data.bot_running %}
+                        🤖 Bot is Running Smoothly
+                    {% else %}
+                        ⚠️ Bot Health Issues Detected
+                    {% endif %}
+                </h2>
+                <p class="health-details">
+                    Last checked: {{ health_data.timestamp }}
+                </p>
+                <p class="health-details">
+                    Uptime: {{ health_data.uptime }}
+                </p>
+            </div>
+        </div>
+
+        <!-- System Metrics -->
+        <div class="dashboard">
+            <!-- Bot Status -->
+            <div class="card fade-in">
+                <div class="card-header">
+                    <div class="card-icon">
+                        {% if health_data.bot_running %}
+                            <i class="fas fa-robot" style="color: #4CAF50;"></i>
+                        {% else %}
+                            <i class="fas fa-robot" style="color: #f44336;"></i>
+                        {% endif %}
+                    </div>
+                    <div class="card-title">Bot Status</div>
+                </div>
+                <div class="stat-value" style="color: {{ '#4CAF50' if health_data.bot_running else '#f44336' }};">
+                    {{ 'ONLINE' if health_data.bot_running else 'OFFLINE' }}
+                </div>
+                <div class="stat-label">Telegram Bot</div>
+            </div>
+
+            <!-- Database Status -->
+            <div class="card fade-in">
+                <div class="card-header">
+                    <div class="card-icon">
+                        {% if health_data.database_connected %}
+                            <i class="fas fa-database" style="color: #4CAF50;"></i>
+                        {% else %}
+                            <i class="fas fa-database" style="color: #ff9800;"></i>
+                        {% endif %}
+                    </div>
+                    <div class="card-title">Database</div>
+                </div>
+                <div class="stat-value" style="color: {{ '#4CAF50' if health_data.database_connected else '#ff9800' }};">
+                    {{ 'CONNECTED' if health_data.database_connected else 'FALLBACK' }}
+                </div>
+                <div class="stat-label">
+                    {{ 'PostgreSQL' if health_data.database_connected else 'File Storage' }}
+                </div>
+            </div>
+
+            <!-- AI System -->
+            <div class="card fade-in">
+                <div class="card-header">
+                    <div class="card-icon">
+                        {% if health_data.ai_available %}
+                            <i class="fas fa-brain" style="color: #4CAF50;"></i>
+                        {% else %}
+                            <i class="fas fa-brain" style="color: #f44336;"></i>
+                        {% endif %}
+                    </div>
+                    <div class="card-title">AI Protection</div>
+                </div>
+                <div class="stat-value" style="color: {{ '#4CAF50' if health_data.ai_available else '#f44336' }};">
+                    {{ 'ACTIVE' if health_data.ai_available else 'DISABLED' }}
+                </div>
+                <div class="stat-label">Copyright Filter</div>
+            </div>
+
+            <!-- Memory Usage -->
+            <div class="card fade-in">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <i class="fas fa-memory"></i>
+                    </div>
+                    <div class="card-title">Memory Usage</div>
+                </div>
+                <div class="stat-value">{{ health_data.memory_usage }}%</div>
+                <div class="stat-label">{{ health_data.memory_used }} / {{ health_data.memory_total }}</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {{ health_data.memory_usage }}%; background: {{ '#4CAF50' if health_data.memory_usage < 80 else '#ff9800' if health_data.memory_usage < 90 else '#f44336' }};"></div>
+                </div>
+            </div>
+
+            <!-- CPU Usage -->
+            <div class="card fade-in">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <i class="fas fa-microchip"></i>
+                    </div>
+                    <div class="card-title">CPU Usage</div>
+                </div>
+                <div class="stat-value">{{ health_data.cpu_usage }}%</div>
+                <div class="stat-label">{{ health_data.cpu_cores }} cores</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {{ health_data.cpu_usage }}%; background: {{ '#4CAF50' if health_data.cpu_usage < 70 else '#ff9800' if health_data.cpu_usage < 90 else '#f44336' }};"></div>
+                </div>
+            </div>
+
+            <!-- Disk Usage -->
+            <div class="card fade-in">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <i class="fas fa-hdd"></i>
+                    </div>
+                    <div class="card-title">Disk Usage</div>
+                </div>
+                <div class="stat-value">{{ health_data.disk_usage }}%</div>
+                <div class="stat-label">{{ health_data.disk_used }} / {{ health_data.disk_total }}</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {{ health_data.disk_usage }}%; background: {{ '#4CAF50' if health_data.disk_usage < 80 else '#ff9800' if health_data.disk_usage < 90 else '#f44336' }};"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Information -->
+        <div class="card table-container">
+            <div class="card-header">
+                <div class="card-icon">
+                    <i class="fas fa-info-circle"></i>
+                </div>
+                <div class="card-title">System Information</div>
+            </div>
+            
+            <table class="table">
+                <tr>
+                    <td><strong><i class="fas fa-server"></i> Environment</strong></td>
+                    <td>{{ health_data.environment }}</td>
+                </tr>
+                <tr>
+                    <td><strong><i class="fas fa-network-wired"></i> Port</strong></td>
+                    <td>{{ health_data.port }}</td>
+                </tr>
+                <tr>
+                    <td><strong><i class="fas fa-code-branch"></i> Python Version</strong></td>
+                    <td>{{ health_data.python_version }}</td>
+                </tr>
+                <tr>
+                    <td><strong><i class="fas fa-clock"></i> Uptime</strong></td>
+                    <td>{{ health_data.uptime }}</td>
+                </tr>
+                <tr>
+                    <td><strong><i class="fas fa-calendar"></i> Started At</strong></td>
+                    <td>{{ health_data.start_time }}</td>
+                </tr>
+                <tr>
+                    <td><strong><i class="fas fa-users"></i> Total Channels</strong></td>
+                    <td>{{ health_data.total_channels }}</td>
+                </tr>
+                <tr>
+                    <td><strong><i class="fas fa-user-shield"></i> Total Admins</strong></td>
+                    <td>{{ health_data.total_admins }}</td>
+                </tr>
+                <tr>
+                    <td><strong><i class="fas fa-shield-alt"></i> Filter Keywords</strong></td>
+                    <td>{{ health_data.total_keywords }}</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Service Status -->
+        <div class="card table-container">
+            <div class="card-header">
+                <div class="card-icon">
+                    <i class="fas fa-cogs"></i>
+                </div>
+                <div class="card-title">Service Status</div>
+            </div>
+            
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Service</th>
+                        <th>Status</th>
+                        <th>Last Check</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><i class="fas fa-robot"></i> Telegram Bot</td>
+                        <td>
+                            <span class="status-badge {{ 'status-active' if health_data.bot_running else 'status-inactive' }}">
+                                {{ 'Running' if health_data.bot_running else 'Stopped' }}
+                            </span>
+                        </td>
+                        <td>{{ health_data.timestamp }}</td>
+                        <td>{{ 'Polling active' if health_data.bot_running else 'Connection failed' }}</td>
+                    </tr>
+                    <tr>
+                        <td><i class="fas fa-database"></i> Database</td>
+                        <td>
+                            <span class="status-badge {{ 'status-active' if health_data.database_connected else 'status-inactive' }}">
+                                {{ 'Connected' if health_data.database_connected else 'Fallback' }}
+                            </span>
+                        </td>
+                        <td>{{ health_data.timestamp }}</td>
+                        <td>{{ 'PostgreSQL active' if health_data.database_connected else 'Using file storage' }}</td>
+                    </tr>
+                    <tr>
+                        <td><i class="fas fa-brain"></i> AI Filter</td>
+                        <td>
+                            <span class="status-badge {{ 'status-active' if health_data.ai_available else 'status-inactive' }}">
+                                {{ 'Available' if health_data.ai_available else 'Unavailable' }}
+                            </span>
+                        </td>
+                        <td>{{ health_data.timestamp }}</td>
+                        <td>{{ 'NLTK + scikit-learn' if health_data.ai_available else 'Libraries missing' }}</td>
+                    </tr>
+                    <tr>
+                        <td><i class="fas fa-film"></i> TMDB API</td>
+                        <td>
+                            <span class="status-badge {{ 'status-active' if health_data.tmdb_available else 'status-inactive' }}">
+                                {{ 'Available' if health_data.tmdb_available else 'Unavailable' }}
+                            </span>
+                        </td>
+                        <td>{{ health_data.timestamp }}</td>
+                        <td>{{ 'API key valid' if health_data.tmdb_available else 'Check API key' }}</td>
+                    </tr>
+                    <tr>
+                        <td><i class="fas fa-globe"></i> Web Server</td>
+                        <td>
+                            <span class="status-badge status-active">
+                                Running
+                            </span>
+                        </td>
+                        <td>{{ health_data.timestamp }}</td>
+                        <td>Health checks active</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon">
+                    <i class="fas fa-tools"></i>
+                </div>
+                <div class="card-title">Quick Actions</div>
+            </div>
+            
+            <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px;">
+                <button class="btn" onclick="refreshHealth()">
+                    <i class="fas fa-sync-alt"></i> Refresh Status
+                </button>
+                <a href="/admin" class="btn btn-secondary">
+                    <i class="fas fa-cog"></i> Admin Panel
+                </a>
+                <button class="btn btn-success" onclick="testBot()">
+                    <i class="fas fa-play"></i> Test Bot
+                </button>
+                <button class="btn btn-secondary" onclick="downloadLogs()">
+                    <i class="fas fa-download"></i> Download Logs
+                </button>
+                <button class="btn btn-secondary" onclick="exportHealth()">
+                    <i class="fas fa-file-export"></i> Export Report
+                </button>
+            </div>
+        </div>
+
+        <!-- Alerts -->
+        {% if not health_data.bot_running %}
+        <div class="alert alert-danger">
+            <strong><i class="fas fa-exclamation-triangle"></i> Critical:</strong>
+            Telegram bot is not responding. Check bot token and network connectivity.
+        </div>
+        {% endif %}
+
+        {% if not health_data.database_connected %}
+        <div class="alert alert-warning">
+            <strong><i class="fas fa-exclamation-circle"></i> Warning:</strong>
+            Database connection failed. Using file storage as fallback.
+        </div>
+        {% endif %}
+
+        {% if health_data.memory_usage > 90 %}
+        <div class="alert alert-danger">
+            <strong><i class="fas fa-memory"></i> High Memory Usage:</strong>
+            Memory usage is at {{ health_data.memory_usage }}%. Consider restarting the service.
+        </div>
+        {% elif health_data.memory_usage > 80 %}
+        <div class="alert alert-warning">
+            <strong><i class="fas fa-memory"></i> Memory Warning:</strong>
+            Memory usage is at {{ health_data.memory_usage }}%. Monitor closely.
+        </div>
+        {% endif %}
+
+        {% if health_data.cpu_usage > 90 %}
+        <div class="alert alert-danger">
+            <strong><i class="fas fa-microchip"></i> High CPU Usage:</strong>
+            CPU usage is at {{ health_data.cpu_usage }}%. System may be under heavy load.
+        </div>
+        {% endif %}
+
+        <!-- Footer -->
+        <footer style="text-align: center; margin-top: 40px; padding: 20px; color: rgba(255,255,255,0.7);">
+            <p><i class="fas fa-heartbeat"></i> Health check updates every 30 seconds</p>
+            <p>Last updated: {{ health_data.timestamp }}</p>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <script>
+        function refreshHealth() {
+            location.reload();
+        }
+
+        async function testBot() {
+            try {
+                const response = await fetch('/api/test-bot', { method: 'POST' });
+                const result = await response.json();
+                
+                if (response.ok) {
+                    alert('✅ Bot test successful!\n\n' + result.message);
+                } else {
+                    alert('❌ Bot test failed!\n\n' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                alert('❌ Error testing bot: ' + error.message);
+            }
+        }
+
+        function downloadLogs() {
+            window.open('/api/logs', '_blank');
+        }
+
+        function exportHealth() {
+            window.open('/api/health/export', '_blank');
+        }
+
+        // Auto-refresh status indicators
+        setInterval(() => {
+            const statusElements = document.querySelectorAll('.status-badge');
+            statusElements.forEach(el => {
+                el.style.animation = 'pulse 1s ease-in-out';
+                setTimeout(() => {
+                    el.style.animation = '';
+                }, 1000);
+            });
+        }, 5000);
+    </script>
+</body>
+</html>
