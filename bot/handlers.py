@@ -45,10 +45,10 @@ Use /help to see all available commands!
     """
     
     keyboard = [
-        [InlineKeyboardButton("📋 Help", callback_data="help"),
-         InlineKeyboardButton("🔧 Admin Panel", callback_data="admin")],
-        [InlineKeyboardButton("🎬 Search Movies", callback_data="search"),
-         InlineKeyboardButton("📞 Contact", callback_data="contact")]
+        [InlineKeyboardButton("📋 Help", callback_data="/help"),
+         InlineKeyboardButton("🔧 Admin Panel", callback_data="/admin")],
+        [InlineKeyboardButton("🎬 Search Movies", callback_data="/search"),
+         InlineKeyboardButton("📞 Contact", callback_data="/contact")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
@@ -109,18 +109,18 @@ async def contact_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     contact_text = """
 📞 **Contact Information**
 
-**Bot Developer:** @BotDeveloper
-**Support Group:** @BotSupport
-**Channel:** @BotUpdates
+**Bot Developer:** Mraprguild 
+**Support Group:** @mraprguildsupport
+**Group Management:** @aprgrouphelpbot
 
 **🆘 Need Help?**
 • Join our support group for quick assistance
-• Check the documentation on our channel
+• Check the documentation on our Group Management 
 • Report bugs or suggest features
 
 **📧 Direct Contact:**
-• Email: support@botservice.com
-• Telegram: @AdminContact
+• Email: mraprguild@gmail.com
+• Telegram: @Sathishkumar33
 
 **🕐 Support Hours:**
 Monday - Friday: 9:00 AM - 6:00 PM UTC
@@ -130,8 +130,8 @@ Thank you for using our bot! 🤖
     """
     
     keyboard = [
-        [InlineKeyboardButton("💬 Support Group", url="https://t.me/BotSupport"),
-         InlineKeyboardButton("📢 Updates Channel", url="https://t.me/BotUpdates")]
+        [InlineKeyboardButton("💬 Support Group", url="https://t.me/mraprguildsupport"),
+         InlineKeyboardButton("📢 Updates Channel", url="https://t.me/+Z3ImQkd3of1iNmY9")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
