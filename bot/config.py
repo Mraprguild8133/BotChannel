@@ -11,6 +11,23 @@ load_dotenv()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 TMDB_API_KEY = os.getenv("TMDB_API_KEY", "default_tmdb_key")
 
+# Contact Information
+CONTACT_INFO = {
+    'telegram': '@Sathishkumar33',
+    'developer': 'Sathish Kumar'
+}
+
+# Channel Information
+MOVIE_SEARCH_CHANNEL = 'https://t.me/mraprmoviesrequest'
+MOVIE_DOWNLOAD_CHANNEL = 'https://t.me/mraprguildofficialmovies'
+
+# External Services
+SHORTENER_URL = 'https://www.mraprguilds.site'
+GITHUB_URL = 'https://github.com/Mraprguild'
+
+# API Keys
+SHORTENER_API_KEY = os.getenv('SHORTENER_API_KEY', '')
+
 # Database configuration
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///bot.db")
 
