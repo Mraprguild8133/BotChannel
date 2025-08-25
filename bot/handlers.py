@@ -7,7 +7,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 
 from .config import CONTACT_INFO, MOVIE_SEARCH_CHANNEL, MOVIE_DOWNLOAD_CHANNEL, GITHUB_URL, SHORTENER_URL
-from .database import get_welcome_message, set_welcome_message
+from bot.database import load_json_data, save_json_data
 from .url_shortener import shorten_url
 from .movie_search import search_movie, get_download_link
 
