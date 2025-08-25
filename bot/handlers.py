@@ -4,9 +4,10 @@ Basic command handlers for the Telegram bot
 
 import logging
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ContextTypes
-
+from telegram.ext import ContextType 
 from .config import CONTACT_INFO, MOVIE_SEARCH_CHANNEL, MOVIE_DOWNLOAD_CHANNEL, GITHUB_URL, SHORTENER_URL
+from .url_shortener import shorten_url
+from .movie_search import search_movie, get_download_link
 from bot.database import load_json_data, save_json_data
 from .url_shortener import shorten_url
 from .movie_search import search_movie, get_download_link
